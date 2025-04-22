@@ -1264,7 +1264,7 @@
         
         <!-- 页脚 -->
         <footer class="py-6 text-center text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-gray-800">
-            <p class="text-base">呼吸小冒險 © mindcrafter </p>
+            <p class="text-base">呼吸小冒險 © MindCrafter - 陪伴孩子的正念小夥伴</p>
         </footer>
     </div>
     
@@ -2474,12 +2474,144 @@
             speedSlider.addEventListener('input', function() { setSpeed(this.value); });
         }
         
-        // 統計和獎章數據 - 模擬本地存儲功能
+        // LocalStorage 資料存取管理器
+        const storageManager = {
+            // 存儲鍵名
+            KEYS: {
+                BADGES: 'breathAdventure_badges',
+                PRACTICE_HISTORY: 'breathAdventure_practiceHistory',
+                SETTINGS: 'breathAdventure_settings',
+                FIRST_RUN: 'breathAdventure_firstRun'
+            },
+            
+            // 檢查是否為首次運行
+            isFirstRun: function() {
+                return localStorage.getItem(this.KEYS.FIRST_RUN) === null;
+            },
+            
+            // 標記為已運行
+            markAsRun: function() {
+                localStorage.setItem(this.KEYS.FIRST_RUN, 'false');
+            },
+            
+            // 初始化存儲
+            initialize: function() {
+                if (this.isFirstRun()) {
+                    console.log('首次運行應用，初始化數據...');
+                    this.resetAllData();
+                    this.markAsRun();
+                }
+            },
+            
+            // 重置所有數據
+            resetAllData: function() {
+                // 初始徽章設置 - 所有徽章未解鎖
+                const initialBadges = {
+                    stars: { id: 'stars', name: '星星探險家', icon: 'fa-star', earned: false },
+                    clouds: { id: 'clouds', name: '雲朵收集者', icon: 'fa-cloud', earned: false },
+                    moon: { id: 'moon', name: '夢境旅人', icon: 'fa-moon', earned: false },
+                    sun: { id: 'sun', name: '陽光使者', icon: 'fa-sun', earned: false },
+                    tree: { id: 'tree', name: '森林守護者', icon: 'fa-tree', earned: false },
+                    water: { id: 'water', name: '海洋探索者', icon: 'fa-water', earned: false },
+                    mountain: { id: 'mountain', name: '山頂冒險家', icon: 'fa-mountain', earned: false },
+                    dragon: { id: 'dragon', name: '神龍呼吸大師', icon: 'fa-dragon', earned: false }
+                };
+                
+                // 清空練習記錄
+                const initialPracticeHistory = [];
+                
+                // 存儲初始數據
+                this.saveBadges(initialBadges);
+                this.savePracticeHistory(initialPracticeHistory);
+                
+                return {
+                    badges: initialBadges,
+                    practiceHistory: initialPracticeHistory
+                };
+            },
+            
+            // 保存徽章數據
+            saveBadges: function(badges) {
+                try {
+                    localStorage.setItem(this.KEYS.BADGES, JSON.stringify(badges));
+                    return true;
+                } catch (e) {
+                    console.error('保存徽章數據失敗:', e);
+                    return false;
+                }
+            },
+            
+            // 獲取徽章數據
+            getBadges: function() {
+                try {
+                    const badges = localStorage.getItem(this.KEYS.BADGES);
+                    return badges ? JSON.parse(badges) : null;
+                } catch (e) {
+                    console.error('獲取徽章數據失敗:', e);
+                    return null;
+                }
+            },
+            
+            // 保存練習記錄
+            savePracticeHistory: function(history) {
+                try {
+                    localStorage.setItem(this.KEYS.PRACTICE_HISTORY, JSON.stringify(history));
+                    return true;
+                } catch (e) {
+                    console.error('保存練習記錄失敗:', e);
+                    return false;
+                }
+            },
+            
+            // 獲取練習記錄
+            getPracticeHistory: function() {
+                try {
+                    const history = localStorage.getItem(this.KEYS.PRACTICE_HISTORY);
+                    return history ? JSON.parse(history) : [];
+                } catch (e) {
+                    console.error('獲取練習記錄失敗:', e);
+                    return [];
+                }
+            },
+            
+            // 添加新練習記錄
+            addPracticeRecord: function(record) {
+                try {
+                    const history = this.getPracticeHistory();
+                    history.push(record);
+                    return this.savePracticeHistory(history);
+                } catch (e) {
+                    console.error('添加練習記錄失敗:', e);
+                    return false;
+                }
+            },
+            
+            // 更新徽章狀態
+            updateBadge: function(badgeId, earned, date) {
+                try {
+                    const badges = this.getBadges();
+                    if (badges && badges[badgeId]) {
+                        badges[badgeId].earned = earned;
+                        badges[badgeId].date = date;
+                        return this.saveBadges(badges);
+                    }
+                    return false;
+                } catch (e) {
+                    console.error('更新徽章狀態失敗:', e);
+                    return false;
+                }
+            }
+        };
+        
+        // 初始化存儲
+        storageManager.initialize();
+        
+        // 用戶數據管理器 - 使用 localStorage 存儲
         const userData = {
-            // 徽章管理
-            badges: {
-                stars: { id: 'stars', name: '星星探險家', icon: 'fa-star', earned: true, date: '2023-12-01' },
-                clouds: { id: 'clouds', name: '雲朵收集者', icon: 'fa-cloud', earned: true, date: '2023-12-05' },
+            // 徽章管理 - 從 localStorage 加載或使用默認值
+            badges: storageManager.getBadges() || {
+                stars: { id: 'stars', name: '星星探險家', icon: 'fa-star', earned: false },
+                clouds: { id: 'clouds', name: '雲朵收集者', icon: 'fa-cloud', earned: false },
                 moon: { id: 'moon', name: '夢境旅人', icon: 'fa-moon', earned: false },
                 sun: { id: 'sun', name: '陽光使者', icon: 'fa-sun', earned: false },
                 tree: { id: 'tree', name: '森林守護者', icon: 'fa-tree', earned: false },
@@ -2488,18 +2620,101 @@
                 dragon: { id: 'dragon', name: '神龍呼吸大師', icon: 'fa-dragon', earned: false }
             },
             
-            // 練習記錄
-            practiceHistory: [
-                { date: '2023-12-01', minutes: 15, type: 'circle' },
-                { date: '2023-12-02', minutes: 12, type: 'star' },
-                { date: '2023-12-03', minutes: 18, type: 'box' },
-                { date: '2023-12-04', minutes: 5, type: 'circle' }
-            ],
+            // 練習記錄 - 從 localStorage 加載或使用空數組
+            practiceHistory: storageManager.getPracticeHistory() || [],
+            
+            // 獲取當前日期
+            getFormattedDate: function() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            },
             
             // 本週練習天數
             getCurrentWeekPractice: function() {
-                // 模擬功能，實際應用中需要比較日期
-                return { days: 3, total: 7, streak: 3 };
+                // 获取当前日期
+                const today = new Date();
+                const currentDay = today.getDay() || 7; // 將星期天視為7
+                
+                // 计算本周的起始日期（星期一）
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - currentDay + 1);
+                weekStart.setHours(0, 0, 0, 0);
+                
+                // 获取一周前的日期作为比较点
+                const oneWeekAgo = new Date(today);
+                oneWeekAgo.setDate(today.getDate() - 7);
+                oneWeekAgo.setHours(0, 0, 0, 0);
+                
+                // 筛选本周的练习记录
+                const dateFormatter = new Intl.DateTimeFormat('fr-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                
+                // 获取不重复的练习日期
+                const practiceDates = this.practiceHistory.map(record => {
+                    return record.date;
+                }).filter((date, index, self) => {
+                    return self.indexOf(date) === index;
+                });
+                
+                // 本周练习的天数
+                const weekDays = practiceDates.filter(dateStr => {
+                    const recordDate = new Date(dateStr);
+                    return recordDate >= weekStart && recordDate <= today;
+                });
+                
+                // 计算连续练习天数
+                let streak = 0;
+                const sortedDates = practiceDates.sort((a, b) => new Date(b) - new Date(a)); // 降序排列
+                
+                if (sortedDates.length > 0) {
+                    // 从最近的日期开始检查
+                    const latestDate = new Date(sortedDates[0]);
+                    let checkDate = new Date(latestDate);
+                    
+                    // 检查今天是否练习
+                    const todayStr = dateFormatter.format(today);
+                    const hasToday = sortedDates.includes(todayStr);
+                    
+                    if (hasToday) {
+                        streak = 1;
+                        checkDate = new Date(today);
+                    } else {
+                        // 检查最新记录是否是昨天
+                        const yesterday = new Date(today);
+                        yesterday.setDate(today.getDate() - 1);
+                        const yesterdayStr = dateFormatter.format(yesterday);
+                        
+                        if (sortedDates[0] === yesterdayStr) {
+                            streak = 1;
+                            checkDate = yesterday;
+                        }
+                    }
+                    
+                    // 继续检查之前的日期
+                    if (streak > 0) {
+                        let dayToCheck = new Date(checkDate);
+                        dayToCheck.setDate(dayToCheck.getDate() - 1);
+                        
+                        while (true) {
+                            const dateStr = dateFormatter.format(dayToCheck);
+                            if (sortedDates.includes(dateStr)) {
+                                streak++;
+                                dayToCheck.setDate(dayToCheck.getDate() - 1);
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                return { 
+                    days: weekDays.length, 
+                    total: 7, 
+                    streak: streak,
+                    dates: weekDays // 返回本周练习的日期
+                };
             },
             
             // 總練習時間統計
@@ -2509,18 +2724,37 @@
                 let week = 0;
                 let yesterday = 0;
                 
+                // 获取今天和昨天的日期字符串
+                const today_date = this.getFormattedDate();
+                
+                // 昨天的日期
+                const yesterdayDate = new Date();
+                yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+                const yesterday_date = yesterdayDate.toISOString().split('T')[0];
+                
+                // 一周前的日期
+                const weekAgoDate = new Date();
+                weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+                
                 this.practiceHistory.forEach(record => {
+                    // 总时间
                     total += record.minutes;
                     
-                    // 模擬今天和昨天的記錄
-                    if (record.date === '2023-12-04') {
+                    // 今天的时间
+                    if (record.date === today_date) {
                         today += record.minutes;
-                    } else if (record.date === '2023-12-03') {
+                    }
+                    
+                    // 昨天的时间
+                    if (record.date === yesterday_date) {
                         yesterday += record.minutes;
                     }
                     
-                    // 模擬本週記錄
-                    week += record.minutes;
+                    // 本周的时间 - 需要日期比较
+                    const recordDate = new Date(record.date);
+                    if (recordDate >= weekAgoDate) {
+                        week += record.minutes;
+                    }
                 });
                 
                 return {
@@ -2537,16 +2771,23 @@
                 const types = { circle: 0, box: 0, body: 0, star: 0 };
                 
                 this.practiceHistory.forEach(record => {
-                    types[record.type] += record.minutes;
-                    total += record.minutes;
+                    if (types[record.type] !== undefined) {
+                        types[record.type] += record.minutes;
+                        total += record.minutes;
+                    }
                 });
+                
+                // 防止除以零
+                if (total === 0) {
+                    return { circle: 0, box: 0, body: 0, star: 0 };
+                }
                 
                 // 計算百分比
                 return {
-                    circle: Math.round((types.circle / total) * 100),
-                    box: Math.round((types.box / total) * 100),
-                    body: Math.round((types.body / total) * 100),
-                    star: Math.round((types.star / total) * 100)
+                    circle: Math.round((types.circle / total) * 100) || 0,
+                    box: Math.round((types.box / total) * 100) || 0,
+                    body: Math.round((types.body / total) * 100) || 0,
+                    star: Math.round((types.star / total) * 100) || 0
                 };
             },
             
@@ -2561,19 +2802,28 @@
                 return count;
             },
             
-            // 模擬添加練習記錄
+            // 添加練習記錄
             addPracticeSession: function(minutes, type) {
-                const today = '2023-12-04'; // 模擬今天的日期
+                const today = this.getFormattedDate();
                 
-                // 添加記錄
-                this.practiceHistory.push({
+                // 創建新記錄
+                const newRecord = {
                     date: today,
                     minutes: minutes,
-                    type: type
-                });
+                    type: type,
+                    timestamp: new Date().getTime()
+                };
+                
+                // 添加記錄到歷史
+                this.practiceHistory.push(newRecord);
+                
+                // 保存到 localStorage
+                storageManager.savePracticeHistory(this.practiceHistory);
                 
                 // 檢查是否需要解鎖新徽章
                 this.checkForNewBadges();
+                
+                return true;
             },
             
             // 檢查和解鎖新徽章
@@ -2581,22 +2831,83 @@
                 const stats = this.getTimeStats();
                 const weekData = this.getCurrentWeekPractice();
                 const typeUsage = this.getTypeUsage();
+                const today = this.getFormattedDate();
                 
-                // 範例檢查條件
+                // 獲取每種類型的練習次數
+                const typeCounts = {};
+                this.practiceHistory.forEach(record => {
+                    typeCounts[record.type] = (typeCounts[record.type] || 0) + 1;
+                });
+                
+                // 星星探險家：完成10次星星呼吸練習
+                if (typeCounts.star >= 10 && !this.badges.stars.earned) {
+                    this.badges.stars.earned = true;
+                    this.badges.stars.date = today;
+                    storageManager.updateBadge('stars', true, today);
+                    this.showBadgeEarnedNotification('星星探險家');
+                }
+                
+                // 雲朵收集者：累積20分鐘的呼吸練習
+                if (stats.total >= 20 && !this.badges.clouds.earned) {
+                    this.badges.clouds.earned = true;
+                    this.badges.clouds.date = today;
+                    storageManager.updateBadge('clouds', true, today);
+                    this.showBadgeEarnedNotification('雲朵收集者');
+                }
+                
                 // 夢境旅人：連續3天完成練習
                 if (weekData.streak >= 3 && !this.badges.moon.earned) {
                     this.badges.moon.earned = true;
-                    this.badges.moon.date = '2023-12-04';
+                    this.badges.moon.date = today;
+                    storageManager.updateBadge('moon', true, today);
                     this.showBadgeEarnedNotification('夢境旅人');
                 }
                 
+                // 陽光使者：在7天內完成5次練習
+                if (weekData.days >= 5 && !this.badges.sun.earned) {
+                    this.badges.sun.earned = true;
+                    this.badges.sun.date = today;
+                    storageManager.updateBadge('sun', true, today);
+                    this.showBadgeEarnedNotification('陽光使者');
+                }
+                
+                // 森林守護者：嘗試所有呼吸模式各3次
+                if (typeCounts.circle >= 3 && typeCounts.box >= 3 && 
+                    typeCounts.body >= 3 && typeCounts.star >= 3 && 
+                    !this.badges.tree.earned) {
+                    this.badges.tree.earned = true;
+                    this.badges.tree.date = today;
+                    storageManager.updateBadge('tree', true, today);
+                    this.showBadgeEarnedNotification('森林守護者');
+                }
+                
+                // 海洋探索者：累積練習時間達60分鐘
+                if (stats.total >= 60 && !this.badges.water.earned) {
+                    this.badges.water.earned = true;
+                    this.badges.water.date = today;
+                    storageManager.updateBadge('water', true, today);
+                    this.showBadgeEarnedNotification('海洋探索者');
+                }
+                
                 // 山頂冒險家：完成一次10分鐘以上的練習
-                const longestSession = Math.max(...this.practiceHistory.map(p => p.minutes));
+                const longestSession = Math.max(...this.practiceHistory.map(p => p.minutes) || [0]);
                 if (longestSession >= 10 && !this.badges.mountain.earned) {
                     this.badges.mountain.earned = true;
-                    this.badges.mountain.date = '2023-12-04';
+                    this.badges.mountain.date = today;
+                    storageManager.updateBadge('mountain', true, today);
                     this.showBadgeEarnedNotification('山頂冒險家');
                 }
+                
+                // 神龍呼吸大師：累積練習100次
+                if (this.practiceHistory.length >= 100 && !this.badges.dragon.earned) {
+                    this.badges.dragon.earned = true;
+                    this.badges.dragon.date = today;
+                    storageManager.updateBadge('dragon', true, today);
+                    this.showBadgeEarnedNotification('神龍呼吸大師');
+                }
+                
+                // 保存更新後的徽章數據
+                storageManager.saveBadges(this.badges);
             },
             
             // 顯示獲得新徽章通知
@@ -2624,6 +2935,16 @@
                     document.body.removeChild(notification);
                     updateBadgeDisplay(); // 更新徽章顯示
                 });
+            },
+            
+            // 重置所有資料(方便測試)
+            resetAllData: function() {
+                const resetData = storageManager.resetAllData();
+                this.badges = resetData.badges;
+                this.practiceHistory = resetData.practiceHistory;
+                updateBadgeDisplay();
+                updateStatistics();
+                return true;
             }
         };
         
